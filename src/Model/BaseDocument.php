@@ -15,7 +15,7 @@ abstract class BaseDocument {
 	 * @access private
 	 * @param string $filename the filename of the file
 	 **/
-	protected function load($filename) {
+	public function load($filename) {
 		$handle = fopen($filename, 'rb');
 		$content = fread($handle, filesize($filename));
 		fclose($handle);
@@ -30,7 +30,7 @@ abstract class BaseDocument {
 	 *
 	 * @param string $content the content
 	 **/
-	protected function setContent($content) {
+	public function setContent($content) {
 		$this->content = $content;
 	}
 

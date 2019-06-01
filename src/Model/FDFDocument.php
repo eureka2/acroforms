@@ -2,8 +2,6 @@
 
 namespace acroforms\Model;
 
-use acroforms\Utils\StringToolBox;
-
 /**
  * Class representing the lines of a FDF file.
  */
@@ -21,7 +19,7 @@ class FDFDocument extends BaseDocument {
 	/**
 	 * Loads form data
 	 *
-	 * @param string $data the content
+	 * @param array $data the content
 	 **/
 	public function setFormData($data) {
 		$this->fields = $data['text'];

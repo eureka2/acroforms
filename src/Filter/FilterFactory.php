@@ -22,7 +22,7 @@ class FilterFactory {
 	 * Get a filter class by its name
 	 *
 	 * @param $name a string matching one of the supported default filters (marked with +)
-	 * @return \acroforms\filters\FilterInterface the wished filter class to access the stream
+	 * @return \acroforms\Filter\FilterInterface the wished filter class to access the stream
 	 **/
 	public static function getFilter($name) : FilterInterface{
 		switch($name) {
