@@ -1,0 +1,20 @@
+{
+	"name" : "eureka2/acroforms",
+	"description" : "PDF form filling",
+	"type" : "library",
+	"license" : "MIT",
+    "authors": [
+        {
+            "name": "Eureka2",
+            "homepage": "https://github.com/eureka2/acroforms"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "acroforms\\": "src/"
+        }
+    },
+	"require" : {
+        "php": "^7.1.3",
+	}
+}
