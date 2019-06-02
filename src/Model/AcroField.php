@@ -93,6 +93,10 @@ class AcroField {
 		return $this->type == 'Ch';
 	}
 
+	public function isButton() {
+		return $this->type == 'Btn';
+	}
+
 	public function isSignatureField() {
 		return $this->type == 'Sig';
 	}

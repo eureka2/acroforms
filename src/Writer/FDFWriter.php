@@ -83,7 +83,7 @@ class FDFWriter {
 		$fdfDir = dirname($fdfFile);
 		if (file_exists($fdfDir)) {
 			if (is_writable($fdfDir)) {
-				if (!is_writable($fdfFile) && false) {
+				if (!is_writable($fdfFile)) {
 					$accessError = sprintf("FDFWriter: can not write fdf file (%s), disk full or missing rights?", $fdfFile);
 				}
 			} else {
@@ -98,11 +98,11 @@ class FDFWriter {
 		} else {
 			if (($handle = fopen($fdfFile, 'w')) !== false) {
 				$err = fwrite($handle, $fdf, strlen($fdf));
+				fclose($handle);
 				$success = true;
 			} else {
 				$err = sprintf("FDFWriter output : Unable to generate file '%s', disk full or corrupted?.", $fdfFile);
 			}
-			fclose($handle);
 		}
 		return ["success" => $success, "return" => $err];
 	}

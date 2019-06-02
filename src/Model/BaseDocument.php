@@ -17,6 +17,9 @@ abstract class BaseDocument {
 	 **/
 	public function load($filename) {
 		$handle = fopen($filename, 'rb');
+		if (!$handle) {
+			throw new \Exception(sprintf('BaseDocument: Cannot open file %s !', $filename));
+		}
 		$content = fread($handle, filesize($filename));
 		fclose($handle);
 		if (!$content) {

@@ -59,10 +59,14 @@ namespace acroforms\Utils;
 			$cmd = sprintf('cd %s && %s', escapeshellarg(dirname($cmd)), basename($cmd));
 		}
 		$temp = tempnam(sys_get_temp_dir(), 'acroform_');
-		$pdfOut = $temp.'.pdf';
-		rename($temp, $pdfOut);
-		$cmdline = sprintf('%s "%s" fill_form "%s" output "%s" %s %s', $cmd, $pdfFile, $fdfFile, $pdfOut, $outputModes, $security);
-		return self::run($cmdline, $pdfOut);
+		if ($temp === false) {
+			return ["success" => false, "output" => "PDFtkBridge: pdftk failed because it's impossible to create a temporary file"];
+		} else {
+			$pdfOut = $temp.'.pdf';
+			rename($temp, $pdfOut);
+			$cmdline = sprintf('%s "%s" fill_form "%s" output "%s" %s %s', $cmd, $pdfFile, $fdfFile, $pdfOut, $outputModes, $security);
+			return self::run($cmdline, $pdfOut);
+		}
 	}
 
 }

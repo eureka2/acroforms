@@ -69,6 +69,7 @@ class PDFParser {
 		$inIDDefinition = false;
 		$isSingleLineIDDefinition = false;
 		$isMultiLineIDDefinition = false;
+		$oid = '';
 
 		while ( $this->counter < $this->linesCount ) {
 			$this->entry = $this->pdfDocument->getEntry($this->counter);
@@ -221,7 +222,7 @@ class PDFParser {
 									}
 									$trailerPart++;
 								}
-							} else if ($trailerPart > 0 && (!is_null($inIDDefinition) || preg_match("/^\/(Size|Root|Info|ID|DocChecksum)/", $this->entry, $match))) {
+							} else if ($trailerPart > 0 && (!$inIDDefinition || preg_match("/^\/(Size|Root|Info|ID|DocChecksum)/", $this->entry, $match))) {
 								if (preg_match("/\/Size (\d+)/", $this->entry, $match)) {
 									$this->pdfDocument->addMeta("size", $match[1]);
 								}

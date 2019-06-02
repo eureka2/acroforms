@@ -30,7 +30,7 @@ class FilterFlate implements FilterInterface {
 	 * Method to encode data into GZIP compressed.
 	 *
 	 * @param string $data    The data.
-	 * @return string         The compressed data
+	 * @return string|false   The compressed data
 	 */
 	public function encode($data) {
 		return gzcompress($data, 9);

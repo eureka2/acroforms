@@ -298,6 +298,40 @@ class AcroForm {
 
 	/**
 	 *
+	 * Returns the fields that are text type
+	 *
+	 * @return array The fields that are text type
+	 **/
+	public function getTextFields() {
+		$fields = [];
+		$pdfFields = $this->pdfDocument->getFields();
+		foreach ($pdfFields as $field) {
+			if ($field->isTextField() || $field->isChoice()) {
+				$fields[] = preg_replace("/\[\d+\]\s*$/", "", $field->getName());
+			}
+		}
+		return $fields;
+	}
+
+	/**
+	 *
+	 * Returns the fields that are button type (checkboxes, radios, ...)
+	 *
+	 * @return array The fields that are button type
+	 **/
+	public function getButtonFields() {
+		$fields = [];
+		$pdfFields = $this->pdfDocument->getFields();
+		foreach ($pdfFields as $field) {
+			if ($field->isButton()) {
+				$fields[] = preg_replace("/\[\d+\]\s*$/", "", $field->getName());
+			}
+		}
+		return $fields;
+	}
+
+	/**
+	 *
 	 * Merge FDF file with a PDF file
 	 *
 	 * @param bool $flatten Optional, false by default, if true will use pdftk to flatten the pdf form
@@ -342,6 +376,9 @@ class AcroForm {
 			} else {
 				$pdfUrl = URLToolBox::getUrlfromDir($pdfFile);
 				$temp = tempnam(sys_get_temp_dir(), 'acroform_');
+				if ($temp === false) {
+					throw new \Exception("AcroForm: output failed because it's impossible to create a temporary file");
+				}
 				$fdfFile = $temp.'.fdf';
 				rename($temp, $fdfFile);
 				$tmpFile = true;
