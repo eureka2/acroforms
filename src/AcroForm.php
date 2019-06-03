@@ -41,7 +41,7 @@ class AcroForm {
 		}
 		$options = array_merge([
 			'fdf' => '',
-			'pdftk' => 'pdftk'
+			'pdftk' => ''
 		], $options);
 		if ($pdf == '') {
 			throw new \Exception("AcroForm: Invalid instantiation of AcroForm, a pdf source must be provided");
@@ -61,7 +61,7 @@ class AcroForm {
 		];
 		$this->pdftkExecutable = $options['pdftk'];
 		$this->pdfDocument = new PDFDocument();
-		$this->pdfDocument->load($this->pdfSource);
+		$this->pdfDocument->load($this->pdfSource, $this->pdftkExecutable);
 		$pdfParser = new PDFParser($this->pdfDocument);
 		$pdfParser->parse();
 		$this->xrefManager = $this->pdfDocument->getCrossReference()->getManager();

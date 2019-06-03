@@ -3,6 +3,7 @@
 namespace acroforms\Model;
 
 use acroforms\Filter\FilterFactory;
+use acroforms\Utils\PDFtkBridge;
 
 /**
  * Class representing the lines of a PDF file.
@@ -30,8 +31,11 @@ class PDFDocument extends BaseDocument {
 	 *
 	 * @param string $filename the filename of the file
 	 **/
-	public function load($filename) {
+	public function load($filename, $pdftk = "") {
 		parent::load($filename);
+		if ($pdftk != "" && $this->isLinearized()) {
+			$this->unLinearize($filename, $pdftk);
+		}
 		$this->check();
 	}
 
@@ -45,20 +49,53 @@ class PDFDocument extends BaseDocument {
 		$this->check();
 	}
 
-	private function check() {
-		$start = substr($this->content, 0, 2048);
-		if (strpos($start, '/ObjStm') !== false) {
+	protected function check() {
+		if ($this->hasObjectStreams()) {
 			throw new \Exception('PDFDocument: Object streams are not supported');
 		}
-		if (strpos($start, '/Linearized') !== false) {
+		if ($this->isLinearized()) {
 			throw new \Exception('PDFDocument: Fast Web View mode is not supported');
 		}
-		$end = substr($this->content, -512);
-		if (strpos($end, '/Prev') !== false) {
+		if ($this->hasIncrementalUpdates()) {
 			throw new \Exception('PDFDocument: Incremental updates are not supported');
 		}
 		$this->needAppearancesTrue = (strpos($this->content, '/NeedAppearances true') !== false);
 		$this->entries = explode("\n", $this->content);
+	}
+
+	protected function unLinearize($filename, $cmd) {
+		$err = '';
+		if (PDFtkBridge::is_windows()) {
+			$cmd = sprintf('cd %s && %s', escapeshellarg(dirname($cmd)), basename($cmd));
+		}
+		$temp = tempnam(sys_get_temp_dir(), 'acroform_');
+		if ($temp === false) {
+			throw new \Exception("PDFDocument: pdftk failed because it's impossible to create a temporary file");
+		} else {
+			$pdfOut = $temp.'.pdf';
+			rename($temp, $pdfOut);
+			$cmdline = sprintf('%s "%s" output "%s"', $cmd, $filename, $pdfOut);
+			$ret = PDFtkBridge::run($cmdline, $pdfOut);
+			if ($ret["success"]) {
+				parent::load($ret["output"]);
+			}
+			@unlink($ret["output"]);
+		}
+	}
+
+	public function isLinearized() {
+		$start = substr($this->content, 0, 2048);
+		return strpos($start, '/Linearized') !== false;
+	}
+
+	public function hasObjectStreams() {
+		$start = substr($this->content, 0, 2048);
+		return strpos($start, '/ObjStm') !== false;
+	}
+
+	public function hasIncrementalUpdates() {
+		$end = substr($this->content, -512);
+		return strpos($end, '/Prev') !== false;
 	}
 
 	public function isNeedAppearancesTrue() {

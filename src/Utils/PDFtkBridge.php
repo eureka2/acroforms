@@ -8,7 +8,7 @@ namespace acroforms\Utils;
  ******************************************************************/
  class PDFtkBridge {
 
-	private static function is_windows(){
+	public static function is_windows(){
 		$PHP_OS = php_uname('s');
 		return (strtoupper(substr($PHP_OS, 0, 3)) === 'WIN');
 	}
