@@ -84,7 +84,7 @@ if (php_sapi_name() == 'cli') {
 |getButtonFields|                                     |Retrieve fields that are buttons  |
 |getTextFields  |                                     |Retrieve fields that are text type|
 |info           |                                     |Retrieve information from the pdf |
-|load           |1. data : array|string               |load a form data to be merged     |
+|load           |1. data : array or string            |load a form data to be merged     |
 |merge          |1. flatten : bool (optional)         |Merge the data with the PDF file  |
 |password       |1. type : string ('owner' or 'user')<br>2. code : string (password code)|define a password code|
 |setMode        |1. mode : string<br>2. value : bool  |set a mode                        |
