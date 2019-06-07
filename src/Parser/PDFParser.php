@@ -1,5 +1,29 @@
 <?php
 
+/*
+The MIT License (MIT)
+
+Copyright (c) 2019 Jacques Archimède
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 namespace acroforms\Parser;
 
 use acroforms\Filter\FilterFactory;
@@ -44,7 +68,8 @@ class PDFParser {
 		}
 		return $value;
 	}
-		/**
+
+	/**
 	 * Parses the lines entries of a PDF 
 	 */
 	public function parse() {
@@ -79,9 +104,7 @@ class PDFParser {
 		if ($from < $this->linesCount) {
 			$defaultMaxLen = 0; //No limit
 			$defaultTooltipLine = 0; //Tooltip is optional as it may not be defined
-			$name = '';
 			$parentId = 0;
-			$fieldtype = '';
 			$removed = false;
 			$objectId = intval($match[1]);
 			$this->pdfDocument->setOffset($objectId, $this->pointers[$from]);
@@ -93,93 +116,110 @@ class PDFParser {
 			$field->setTooltip($defaultTooltipLine);
 			$entry = $this->pdfDocument->getEntry(++$from);
 			while ( $from < $this->linesCount && ! preg_match("/endobj/", $entry)) {
-				foreach (self::METAS as $meta) {
-					if (preg_match("/\/" . $meta . "\s*\(([^\)]+)\)/", $entry, $match)) {
-						$this->pdfDocument->addMeta($meta, $match[1]);
-					} elseif (preg_match("/\/" . $meta . "\s*\<([^\>]+)\>/", $entry, $match)) {
-						$this->pdfDocument->addMeta($meta, $this->decodeValue("hex", $match[1]));
-					}
-				}
-				if (preg_match("/\/Trapped\s*\/(.+)$/",$entry, $match)) {
-					$this->pdfDocument->addMeta("Trapped", strtolower($match[1]));
-				} elseif (preg_match("/^\/T\s?\((.+)\)\s*$/", StringToolBox::protectParentheses($entry), $match)) {
-					$name = StringToolBox::unProtectParentheses($match[1]);
-					$field->setName($name);
-					if ($field->getFullName() != '') {
-						$field->setFullName($field->getFullName() . "." . $name);
-					} else {
-						$field->setFullName($name);
-					}
-					$field->setNameLine($from);
-					$this->objects[$objectId] = [ 'name' => $name, 'parent' => $parentId ];
-					$fullName = [];
-					while (isset($this->objects[$parentId])) {
-						array_unshift($fullName, $this->objects[$parentId]['name']);
-						$parentId = $this->objects[$parentId]['parent'];
-					}
-					if (! empty($fullName)) {
-						$field->setFullName(implode(".", $fullName) . "." . $name);
-					} else {
-						$field->setFullName($name);
-					}
-				} elseif (preg_match("/^\/(V|DV|TU)\s+([\<\(\/])/", $entry, $match)) { 
-					if ($match[1] == "TU") {
-						$field->setTooltip($from);
-					} elseif ($match[1] == "DV") {
-						$field->setDefaultValue($from);
-					} else {
-						$field->setCurrentValue($from);
-					}
-				} elseif (preg_match("/^\/MaxLen\s+(\d+)/", $entry, $match)) {
-					$maxLen = $match[1];
-					$field->setMaxLen(intval($maxLen));
-				} elseif (preg_match("/^\/removed\s+true/", $entry)) {
-					$removed = true;
-				} elseif (preg_match("/^\/Parent\s+(\d+)/", $entry, $match)) {
-					$parentId = $match[1];
-				} elseif (preg_match("/^\/FT\s+\/(.+)$/", $entry, $match)) {
-					$fieldtype = $match[1]; // Tx, Btn, Ch or Sig
-					$field->setType($fieldtype);
-				} elseif (preg_match("/^\/Ff\s+(\d+)/", $entry, $match)) {
-					$field->setFlag(intval($match[1]));
-				} elseif (preg_match("/^\/Opt\s+\[(.+)\]\s*$/", $entry, $match)) {
-					$array = $match[1];
-					if (preg_match_all("/\[([^\]]+)\]/", $array, $match)) {
-						$array = $match[1];
-						$options = [];
-						foreach ($array as $option) {
-							if (preg_match("/^\s*\(([^\)]+)\)\s*\(([^\)]+)\)\s*$/", $option, $match)) {
-								$options[$match[1]] = $match[2];
-							} elseif (preg_match("/^\s*\(([^\)]+)\)\s*$/", $option, $match)) {
-								$options[$match[1]] = $match[1];
-							} 
-						}
-						if (!empty($options)) {
-							$field->setOptions($options);
-						}
-					}
-				} elseif (preg_match("/^\/TI\s+\/(.+)$/", $entry, $match)) {
-					$field->setTopIndex($match[1]);
-				} elseif (preg_match("/^\/I\s+\[(.+)\]\s*$/", $entry, $match)) {
-					$field->setSelecteds(array_map(function ($sel) {
-						return intval($sel);
-					}, preg_split("/\s+/", trim($match[1]))));
-				}
-				if (substr($entry, 0, 7) == '/Fields' && !$this->pdfDocument->isNeedAppearancesTrue()) {
-					$entry = '/NeedAppearances true ' . $entry;
-					$this->pdfDocument->setEntry($from, $entry);
-				}
+				$removed = $removed || ! $this->parseFieldProperty($entry, $from, $field, $parentId);
 				$entry = $this->pdfDocument->getEntry(++$from);
 			}
-			if ($fieldtype != '' // it's a field
-				&& $name != '' // with a name
+			if ($field->getType() != '' // it's a field
+				&& $field->getName() != '' // with a name
 				&& !$removed // not removed 
 				&& !$field->isPushButton()) { // and not a push button
-				$name = preg_replace("/\[\d+\]$/", "", $name);
+				$name = preg_replace("/\[\d+\]$/", "", $field->getName());
 				$this->pdfDocument->setField($name, $field);
 			}
 		}
 		return $from;
+	}
+
+	private function parseFieldProperty($entry, $from, &$field, &$parentId) {
+		$removed = false;
+		$match = [];
+		foreach (self::METAS as $meta) {
+			if (preg_match("/\/" . $meta . "\s*\(([^\)]+)\)/", $entry, $match)) {
+				$this->pdfDocument->addMeta($meta, $match[1]);
+			} elseif (preg_match("/\/" . $meta . "\s*\<([^\>]+)\>/", $entry, $match)) {
+				$this->pdfDocument->addMeta($meta, $this->decodeValue("hex", $match[1]));
+			}
+		}
+		if (preg_match("/\/Trapped\s*\/(.+)$/",$entry, $match)) {
+			$this->pdfDocument->addMeta("Trapped", strtolower($match[1]));
+		} elseif (preg_match("/^\/T\s?\((.+)\)\s*$/", StringToolBox::protectParentheses($entry), $match)) {
+			$this->parseName($from, $match, $field, $parentId);
+		} elseif (preg_match("/^\/(V|DV|TU)\s+([\<\(\/])/", $entry, $match)) {
+			$this->parseValue($from, $match, $field);
+		} elseif (preg_match("/^\/MaxLen\s+(\d+)/", $entry, $match)) {
+			$field->setMaxLen(intval($match[1]));
+		} elseif (preg_match("/^\/removed\s+true/", $entry)) {
+			$removed = true;
+		} elseif (preg_match("/^\/Parent\s+(\d+)/", $entry, $match)) {
+			$parentId = $match[1];
+		} elseif (preg_match("/^\/FT\s+\/(.+)$/", $entry, $match)) {
+			$field->setType($match[1]); // Tx, Btn, Ch or Sig
+		} elseif (preg_match("/^\/Ff\s+(\d+)/", $entry, $match)) {
+			$field->setFlag(intval($match[1]));
+		} elseif (preg_match("/^\/Opt\s+\[(.+)\]\s*$/", $entry, $match)) {
+			$this->parseOptions($match, $field);
+		} elseif (preg_match("/^\/TI\s+\/(.+)$/", $entry, $match)) {
+			$field->setTopIndex($match[1]);
+		} elseif (preg_match("/^\/I\s+\[(.+)\]\s*$/", $entry, $match)) {
+			$field->setSelecteds(array_map(function ($sel) {
+				return intval($sel);
+			}, preg_split("/\s+/", trim($match[1]))));
+		}
+		if (substr($entry, 0, 7) == '/Fields' && !$this->pdfDocument->isNeedAppearancesTrue()) {
+			$this->pdfDocument->setEntry($from, '/NeedAppearances true ' . $entry);
+		}
+		return !$removed;
+	}
+
+	private function parseName($from, $match, &$field, &$parentId) {
+		$name = StringToolBox::unProtectParentheses($match[1]);
+		$field->setName($name);
+		if ($field->getFullName() != '') {
+			$field->setFullName($field->getFullName() . "." . $name);
+		} else {
+			$field->setFullName($name);
+		}
+		$field->setNameLine($from);
+		$objectId = $field->getId();
+		$this->objects[$objectId] = [ 'name' => $name, 'parent' => $parentId ];
+		$fullName = [];
+		while (isset($this->objects[$parentId])) {
+			array_unshift($fullName, $this->objects[$parentId]['name']);
+			$parentId = $this->objects[$parentId]['parent'];
+		}
+		if (! empty($fullName)) {
+			$field->setFullName(implode(".", $fullName) . "." . $name);
+		} else {
+			$field->setFullName($name);
+		}
+	}
+
+	private function parseValue($from, $match, &$field) {
+		if ($match[1] == "TU") {
+			$field->setTooltip($from);
+		} elseif ($match[1] == "DV") {
+			$field->setDefaultValue($from);
+		} else {
+			$field->setCurrentValue($from);
+		}
+	}
+
+	private function parseOptions($match, &$field) {
+		$array = $match[1];
+		if (preg_match_all("/\[([^\]]+)\]/", $array, $match)) {
+			$array = $match[1];
+			$options = [];
+			foreach ($array as $option) {
+				if (preg_match("/^\s*\(([^\)]+)\)\s*\(([^\)]+)\)\s*$/", $option, $match)) {
+					$options[$match[1]] = $match[2];
+				} elseif (preg_match("/^\s*\(([^\)]+)\)\s*$/", $option, $match)) {
+					$options[$match[1]] = $match[1];
+				} 
+			}
+			if (!empty($options)) {
+				$field->setOptions($options);
+			}
+		}
 	}
 
 	private function parseCrossReference() {
