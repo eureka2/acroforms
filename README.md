@@ -63,7 +63,6 @@ $pdf = new AcroForm('example.pdf', [
     'fdf' => 'example.fdf',
     'pdftk' => '/absolute/path/to/pdftk'
 ]);
-$pdf->load($fields);
 $pdf->merge();
 if (php_sapi_name() == 'cli') {
     $pdf->output('F', 'filled.pdf');
@@ -73,6 +72,30 @@ if (php_sapi_name() == 'cli') {
 }
 ?>
 ```
+# Methods
+
+|Name           |Arguments                            |Description                       |
+|---------------|-------------------------------------|----------------------------------|
+|allow          |1. permissions : array (optional)    |Allow permissions                 |
+|compress       |                                     |use the compress filter           |
+|               |                                     |to restore compression            |
+|encrypt        |1. bits : int (0, 40,or 128)         |define encrytion to the given bits|
+|fix            |                                     |try to fix a corrupted PDF file   |
+|flatten        |                                     |flatten output to remove form     |
+|               |                                     |from pdf file keeping field datas |
+|getButtonFields|                                     |Retrieve fields that are buttons  |
+|getTextFields  |                                     |Retrieve fields that are text type|
+|info           |                                     |Retrieve information from the pdf |
+|load           |1. data : array|string               |load a form data to be merged     |
+|merge          |1. flatten : bool (optional)         |Merge the data with the PDF file  |
+|password       |1. type : string ('owner' or 'user') |define a password code            |
+|               |2. code : string (password code)     |                                  |
+|setMode        |1. mode : string                     |set a mode                        |
+|               |2. value : bool                      |                                  |
+|setSupport     |1. support : string (native or pdftk)|change the support                |
+|uncompress     |                                     |apply the uncompress filter       |
+|output         |1. destination : char (I, D, F or S) |output PDF to some destination    |
+|               |2. name : string (PDF file name)     |                                  |
 
 # Copyright and license
 
