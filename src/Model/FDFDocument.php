@@ -71,10 +71,6 @@ class FDFDocument extends BaseDocument {
 
 	public function setField($fieldname, $value) {
 		$fieldname = StringToolBox::normalizeFieldName($fieldname);
-		$field = $this->pdfdocument->getField($fieldname);
-		if ($field === null && !preg_match("/_$/", $fieldname)) {
-			$fieldname .= "_0_";
-		}
 		$this->fields[$fieldname] = $value;
 	}
 
@@ -88,10 +84,6 @@ class FDFDocument extends BaseDocument {
 
 	public function setButton($fieldname, $value) {
 		$fieldname = StringToolBox::normalizeFieldName($fieldname);
-		$field = $this->pdfdocument->getField($fieldname);
-		if ($field === null && !preg_match("/_$/", $fieldname)) {
-			$fieldname .= "_0_";
-		}
 		$this->buttons[$fieldname] = $value;
 	}
 
