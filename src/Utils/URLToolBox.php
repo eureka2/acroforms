@@ -45,7 +45,7 @@ class URLToolBox {
 			'host' => '',
 			'path' => ''
 		], parse_url($relativeUrl));
-		$url["path"] = self::resolvePath($url["path"]);
+		$url["path"] = self::resolvePath($url["path"] ?? '');
 		$absolute_url = self::buildUrl($url);
 		return $absolute_url;
 	}
