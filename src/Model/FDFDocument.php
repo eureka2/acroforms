@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 /*
 The MIT License (MIT)
@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 namespace acroforms\Model;
 
+use acroforms\Utils\StringToolBox;
+
 /**
  * Class representing the lines of a FDF file.
  */
@@ -46,8 +48,12 @@ class FDFDocument extends BaseDocument {
 	 * @param array $data the content
 	 **/
 	public function setFormData($data) {
-		$this->fields = $data['text'];
-		$this->buttons = $data['button'];
+		foreach($data['text'] as $fieldname => $value) {
+			$this->setField($fieldname, $value);
+		}
+		foreach($data['button'] as $fieldname => $value) {
+			$this->setButton($fieldname, $value);
+		}
 		$this->parseNeeded = false;
 	}
 
@@ -63,12 +69,30 @@ class FDFDocument extends BaseDocument {
 		$this->fields = $fields;
 	}
 
+	public function setField($fieldname, $value) {
+		$fieldname = StringToolBox::normalizeFieldName($fieldname);
+		$field = $this->pdfdocument->getField($fieldname);
+		if ($field === null && !preg_match("/_$/", $fieldname)) {
+			$fieldname .= "_0_";
+		}
+		$this->fields[$fieldname] = $value;
+	}
+
 	public function getButtons() {
 		return $this->buttons;
 	}
 
 	public function setButtons(&$buttons) {
 		$this->buttons = $buttons;
+	}
+
+	public function setButton($fieldname, $value) {
+		$fieldname = StringToolBox::normalizeFieldName($fieldname);
+		$field = $this->pdfdocument->getField($fieldname);
+		if ($field === null && !preg_match("/_$/", $fieldname)) {
+			$fieldname .= "_0_";
+		}
+		$this->buttons[$fieldname] = $value;
 	}
 
 	public function isParseNeeded() {

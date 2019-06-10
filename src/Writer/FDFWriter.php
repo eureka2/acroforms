@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 /*
 The MIT License (MIT)
@@ -81,7 +81,7 @@ class FDFWriter {
 		$readonly = [];
 		$fdfBuilder = new FDFBuilder();
 		$fdf = $fdfBuilder->build(
-			URLToolBox::resolve_url($pdfUrl), 
+			URLToolBox::resolveUrl($pdfUrl), 
 			$txOrChFields,
 			$btnFields,
 			$required,

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 /*
 The MIT License (MIT)
@@ -49,8 +49,6 @@ class FDFParser {
 		$beg = chr(254);
 		$end = chr(255);
 		$content = str_replace(["<<", ">>"], [$beg, $end], StringToolBox::protectParentheses($this->fdfDocument->getContent())); 
-		$fields = [];
-		$buttons = [];
 		if (preg_match_all("/" . $beg . "([^" . $end . "]+)" . $end . "/", $content, $matches)) {
 			$fMax = count($matches[0]);
 			for ($f = 0; $f < $fMax; $f++) {
@@ -62,17 +60,15 @@ class FDFParser {
 						if (preg_match("#/V\s*\(([^\)]*)\)#", $field, $v) || preg_match("#/V\s*/(.*)#", $field, $v)) {
 							$value = StringToolBox::unProtectParentheses($v[1]);
 							if ($fieldObject->getType() == 'Btn') {
-								$buttons[$key ] = $value;
+								$this->fdfDocument->setButton($key, $value);
 							} else {
-								$fields[$key ] = $value;
+								$this->fdfDocument->setField($key, $value);
 							}
 						}
 					}
 				}
 			}
 		}
-		$this->fdfDocument->setFields($fields);
-		$this->fdfDocument->setButtons($buttons);
 		$this->fdfDocument->setParseNeeded(false);
 	}
 

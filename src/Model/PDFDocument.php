@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 /*
 The MIT License (MIT)
@@ -28,6 +28,7 @@ namespace acroforms\Model;
 
 use acroforms\Filter\FilterFactory;
 use acroforms\Utils\PDFtkBridge;
+use acroforms\Utils\StringToolBox;
 
 /**
  * Class representing the lines of a PDF file.
@@ -143,12 +144,14 @@ class PDFDocument extends BaseDocument {
 	}
 
 	public function getField($fieldname) {
+		$fieldname = StringToolBox::normalizeFieldName($fieldname);
 		return  isset($this->fields[$fieldname]) ?
 				$this->fields[$fieldname]:
 				null;
 	}
 
 	public function setField($fieldname, $field) {
+		$fieldname = StringToolBox::normalizeFieldName($fieldname);
 		$this->fields[$fieldname] = $field;
 	}
 

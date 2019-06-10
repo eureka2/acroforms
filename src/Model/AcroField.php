@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 /*
 The MIT License (MIT)
@@ -32,15 +32,17 @@ namespace acroforms\Model;
 class AcroField {
 
 	private $id = 0;
+	private $line = -1; // pointer to the first line of the field definition in the entries table of the PDF file
 	private $name = '';
-	private $nameLine = ''; // pointer to the name in the entries table
+	private $nameLine = ''; // pointer to the name in the entries table of the PDF file
 	private $fullName = '';
 	private $type = ''; // Tx, Btn, Ch or Sig
 	private $flag = 0;
 	private $maxLen = 0;
-	private $tooltip = 0; // pointer to the tooltip in the entries table
-	private $defaultValue = 0; // pointer to the default value in the entries table
-	private $currentValue = 0; // pointer to the current value in the entries table
+	private $kids = []; // array of pointers of the kids in the entries table of the PDF file
+	private $tooltip = 0; // pointer to the tooltip in the entries table of the PDF file
+	private $defaultValue = 0; // pointer to the default value in the entries table of the PDF file
+	private $currentValue = 0; // pointer to the current value in the entries table of the PDF file
 	private $options = [];
 	private $topIndex = 0;
 	private $selecteds = [];
@@ -55,6 +57,14 @@ class AcroField {
 
 	public function setId($id) {
 		$this->id = $id;
+	}
+
+	public function getLine() {
+		return $this->line;
+	}
+
+	public function setLine($line) {
+		$this->line = $line;
 	}
 
 	public function getName() {
@@ -248,8 +258,16 @@ class AcroField {
 		return $this->options;
 	}
 
-	public function setOptions($options) {
+	public function setOptions(&$options) {
 		$this->options = $options;
+	}
+
+	public function getKids() {
+	    return $this->kids;
+	}
+
+	public function setKids(&$kids) {
+	    $this->kids = $kids;
 	}
 
 	public function getTopIndex() {

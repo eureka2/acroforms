@@ -1,5 +1,4 @@
-<?php
-
+<?php declare(strict_types = 1);
 /*
 The MIT License (MIT)
 
@@ -329,9 +328,9 @@ class AcroForm {
 	public function getTextFields() {
 		$fields = [];
 		$pdfFields = $this->pdfDocument->getFields();
-		foreach ($pdfFields as $field) {
+		foreach ($pdfFields as $name => $field) {
 			if ($field->isTextField() || $field->isChoice()) {
-				$fields[] = preg_replace("/\[\d+\]\s*$/", "", $field->getName());
+				$fields[] = $name;
 			}
 		}
 		return $fields;
@@ -346,9 +345,9 @@ class AcroForm {
 	public function getButtonFields() {
 		$fields = [];
 		$pdfFields = $this->pdfDocument->getFields();
-		foreach ($pdfFields as $field) {
+		foreach ($pdfFields as $name => $field) {
 			if ($field->isButton()) {
-				$fields[] = preg_replace("/\[\d+\]\s*$/", "", $field->getName());
+				$fields[] = $name;
 			}
 		}
 		return $fields;

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 /*
 The MIT License (MIT)
@@ -47,6 +47,7 @@ class PDFParser {
 	private $linesCount;
 	private $pointers = [];
 	private $objects = []; // name and parent of objects by object id
+	private $objectsLine = []; // line of objects by object id
 
 	private $objectPosition = 0; //Position of an object, in the order it is declared in the pdf file
 
@@ -73,11 +74,15 @@ class PDFParser {
 	 * Parses the lines entries of a PDF 
 	 */
 	public function parse() {
+		$match = [];
 		$this->linesCount = $this->pdfDocument->getEntriesCount();
 		for ($i = 0, $p = 0; $i < $this->linesCount; $i++ ) {
 			$entry = $this->pdfDocument->getEntry($i);
 			$this->pointers[$i] = $p;
 			$p += strlen($entry) + 1;
+			if (preg_match("/^(\d+) (\d+) obj/", $entry, $match)) {
+				$this->objectsLine[$match[1]] = $i;
+			}
 		}
 		$this->parseObjects();
 		$this->parseCrossReference();
@@ -112,6 +117,7 @@ class PDFParser {
 			$this->pdfDocument->setShift($this->objectPosition, 0);
 			$this->objectPosition++;
 			$field = new AcroField(intval($objectId));
+			$field->setLine($from);
 			$field->setMaxLen($defaultMaxLen);
 			$field->setTooltip($defaultTooltipLine);
 			$entry = $this->pdfDocument->getEntry(++$from);
@@ -123,8 +129,10 @@ class PDFParser {
 				&& $field->getName() != '' // with a name
 				&& !$removed // not removed 
 				&& !$field->isPushButton()) { // and not a push button
-				$name = preg_replace("/\[\d+\]$/", "", $field->getName());
-				$this->pdfDocument->setField($name, $field);
+				if ($field->isButton()) {
+					$this->parseFieldStates($field);
+				}
+				$this->pdfDocument->setField($field->getName(), $field);
 			}
 		}
 		return $from;
@@ -158,6 +166,8 @@ class PDFParser {
 			$field->setFlag(intval($match[1]));
 		} elseif (preg_match("/^\/Opt\s+\[(.+)\]\s*$/", $entry, $match)) {
 			$this->parseOptions($match, $field);
+		} elseif (preg_match("/^\/Kids\s+\[(.+)\]\s*$/", $entry, $match)) {
+			$this->parseKids($match, $field);
 		} elseif (preg_match("/^\/TI\s+\/(.+)$/", $entry, $match)) {
 			$field->setTopIndex($match[1]);
 		} elseif (preg_match("/^\/I\s+\[(.+)\]\s*$/", $entry, $match)) {
@@ -201,6 +211,50 @@ class PDFParser {
 			$field->setDefaultValue($from);
 		} else {
 			$field->setCurrentValue($from);
+		}
+	}
+
+	private function parseFieldStates(&$field) {
+		$kids = $field->getKids();
+		array_unshift($kids, $field->getLine());
+		$beg = chr(254);
+		$end = chr(255);
+		$states = [];
+		foreach($kids as $kid) {
+			$from = $kid + 1;
+			$obj = "";
+			$entry = $this->pdfDocument->getEntry($from);
+			while ( $from < $this->linesCount && ! preg_match("/endobj/", $entry)) {
+				$obj .= $entry;
+				$entry = $this->pdfDocument->getEntry(++$from);
+			}
+			$obj = str_replace(["<<", ">>"], [$beg, $end], $obj); 
+			if (preg_match("#(" . $beg . "|" . $end. ")\s*/N\s+" . $beg . "\s*/([^\s]+)" . "#", $obj, $match)) {
+				$states[$match[2]] = true;
+			}
+			if (preg_match("|/AS\s+/([^\s\/]+)|", $obj, $match)) {
+				$states[$match[1]] = true;
+			}
+		}
+		$states = array_keys($states);
+		if (!empty($states)) {
+			$options = $field->getOptions();
+			foreach ($states as $state) {
+				$options[$state] = $state;
+			}
+			$field->setOptions($options);
+		}
+	}
+
+	private function parseKids($match, &$field) {
+		$array = $match[1];
+		if (preg_match_all("/(\d+)\s+\d+\s+R/", $array, $match)) {
+			$array = $match[1];
+			$kids = [];
+			foreach ($array as $objectId) {
+				$kids[] = $this->objectsLine[$objectId];
+			}
+			$field->setKids($kids);
 		}
 	}
 

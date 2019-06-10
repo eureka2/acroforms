@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 /*
 The MIT License (MIT)
@@ -51,8 +51,6 @@ class PDFWriter {
 	 * @param string $value the new value to set
 	 **/
 	public function setFormFieldValue($type, $name, $value) {
-		$names = explode(".", $name);
-		$entry = end($names);
 		if (($field = $this->pdfDocument->getField($entry)) !== null) {
 			if ($type == "tooltip") {
 				$offsetShift = $this->setFieldTooltip($name, $value);
