@@ -74,7 +74,7 @@ class URLToolBox {
 		if (PHP_SAPI === 'cli') {
 			return 'file';
 		}
-		$port = filter_input(INPUT_SERVER, "SERVER_PORT");
+		$port = self::getServerVariableValue("SERVER_PORT");
 		$schemes = [
 			'http'=>   80,
 			'https'=> 443,
@@ -86,16 +86,29 @@ class URLToolBox {
 	}
 
 	private static function getHost() {
-		return PHP_SAPI === 'cli' ? '/' :filter_input(INPUT_SERVER, "HTTP_HOST");
+		return PHP_SAPI === 'cli' ? '/' : self::getServerVariableValue("HTTP_HOST");
 	}
 
 	private static function getWebDir($localDir) {
 		if (PHP_SAPI === 'cli') {
 			return $localDir;
 		}
-		$root = filter_input(INPUT_SERVER, "DOCUMENT_ROOT");
+		$root = realpath(self::getServerVariableValue("DOCUMENT_ROOT"));
 		$serverDir = str_replace($root, '', $localDir);
 		return $serverDir;
+	}
+
+	private static function getServerVariableValue($variable) {
+		$value = filter_input(INPUT_SERVER, $variable);
+		if ($value === null || $value === false) {
+			$value = getenv($variable);
+			if (($value === null || $value === false || $value == '') && $variable == "DOCUMENT_ROOT") {
+				$value = getenv("SCRIPT_NAME");
+				$root = self::fixPath(realpath($value));
+				$value = substr($root, 0 ,strpos($root, $value));
+			}
+		}
+		return $value;
 	}
 
 	private static function buildUrl($parsed) {
