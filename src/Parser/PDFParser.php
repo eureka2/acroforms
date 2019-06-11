@@ -108,7 +108,7 @@ class PDFParser {
 		}
 		if ($from < $this->linesCount) {
 			$defaultMaxLen = 0; //No limit
-			$defaultTooltipLine = 0; //Tooltip is optional as it may not be defined
+			$defaultTooltipLine = 0; // TooltipLine is optional as it may not be defined
 			$parentId = 0;
 			$removed = false;
 			$objectId = intval($match[1]);
@@ -119,7 +119,7 @@ class PDFParser {
 			$field = new AcroField(intval($objectId));
 			$field->setLine($from);
 			$field->setMaxLen($defaultMaxLen);
-			$field->setTooltip($defaultTooltipLine);
+			$field->setTooltipLine($defaultTooltipLine);
 			$entry = $this->pdfDocument->getEntry(++$from);
 			while ( $from < $this->linesCount && ! preg_match("/endobj/", $entry)) {
 				$removed = $removed || ! $this->parseFieldProperty($entry, $from, $field, $parentId);
@@ -152,7 +152,11 @@ class PDFParser {
 			$this->pdfDocument->addMeta("Trapped", strtolower($match[1]));
 		} elseif (preg_match("/^\/T\s?\((.+)\)\s*$/", StringToolBox::protectParentheses($entry), $match)) {
 			$this->parseName($from, $match, $field, $parentId);
-		} elseif (preg_match("/^\/(V|DV|TU)\s+([\<\(\/])/", $entry, $match)) {
+		} elseif (preg_match("/^\/(V|DV|TU)\s*\((.+)\)\s*$/", StringToolBox::protectParentheses($entry), $match)) {
+			$this->parseValue($from, $match, $field);
+		} elseif (preg_match("/^\/(V|DV|TU)\s*\<(.+)\>\s*$/", StringToolBox::protectHexDelimiters($entry), $match)) {
+			$this->parseHexValue($from, $match, $field);
+		} elseif (preg_match("/^\/(V|DV|TU)\s*\/(.*)$/", $entry, $match)) {
 			$this->parseValue($from, $match, $field);
 		} elseif (preg_match("/^\/MaxLen\s+(\d+)/", $entry, $match)) {
 			$field->setMaxLen(intval($match[1]));
@@ -205,12 +209,31 @@ class PDFParser {
 	}
 
 	private function parseValue($from, $match, &$field) {
+		$value = StringToolBox::unProtectParentheses($match[2]);
 		if ($match[1] == "TU") {
-			$field->setTooltip($from);
+			$field->setTooltipLine($from);
+			$field->setTooltip($value);
 		} elseif ($match[1] == "DV") {
-			$field->setDefaultValue($from);
+			$field->setDefaultValueLine($from);
+			$field->setDefaultValue($value);
 		} else {
-			$field->setCurrentValue($from);
+			$field->setCurrentValueLine($from);
+			$field->setCurrentValue($value);
+		}
+	}
+
+	private function parseHexValue($from, $match, &$field) {
+		$value = StringToolBox::unProtectHexDelimiters($match[2]);
+		$value = $this->decodeValue('hex', $value);
+		if ($match[1] == "TU") {
+			$field->setTooltipLine($from);
+			$field->setTooltip($value);
+		} elseif ($match[1] == "DV") {
+			$field->setDefaultValueLine($from);
+			$field->setDefaultValue($value);
+		} else {
+			$field->setCurrentValueLine($from);
+			$field->setCurrentValue($value);
 		}
 	}
 

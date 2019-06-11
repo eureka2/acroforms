@@ -40,9 +40,12 @@ class AcroField {
 	private $flag = 0;
 	private $maxLen = 0;
 	private $kids = []; // array of pointers of the kids in the entries table of the PDF file
-	private $tooltip = 0; // pointer to the tooltip in the entries table of the PDF file
-	private $defaultValue = 0; // pointer to the default value in the entries table of the PDF file
-	private $currentValue = 0; // pointer to the current value in the entries table of the PDF file
+	private $tooltip = '';
+	private $tooltipLine = 0; // pointer to the tooltip in the entries table of the PDF file
+	private $defaultValue = '';
+	private $defaultValueLine = 0; // pointer to the default value in the entries table of the PDF file
+	private $currentValue = '';
+	private $currentValueLine = 0; // pointer to the current value in the entries table of the PDF file
 	private $options = [];
 	private $topIndex = 0;
 	private $selecteds = [];
@@ -238,6 +241,14 @@ class AcroField {
 		$this->tooltip = $tooltip;
 	}
 
+	public function getTooltipLine() {
+		return $this->tooltipLine;
+	}
+
+	public function setTooltipLine($tooltipLine) {
+		$this->tooltipLine = $tooltipLine;
+	}
+
 	public function getDefaultValue() {
 		return $this->defaultValue;
 	}
@@ -246,12 +257,28 @@ class AcroField {
 		$this->defaultValue = $defaultValue;
 	}
 
+	public function getDefaultValueLine() {
+		return $this->defaultValueLine;
+	}
+
+	public function setDefaultValueLine($defaultValueLine) {
+		$this->defaultValueLine = $defaultValueLine;
+	}
+
 	public function getCurrentValue() {
 		return $this->currentValue;
 	}
 
 	public function setCurrentValue($currentValue) {
 		$this->currentValue = $currentValue;
+	}
+
+	public function getCurrentValueLine() {
+		return $this->currentValueLine;
+	}
+
+	public function setCurrentValueLine($currentValueLine) {
+		$this->currentValueLine = $currentValueLine;
 	}
 
 	public function getOptions() {

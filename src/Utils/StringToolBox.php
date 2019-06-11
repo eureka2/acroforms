@@ -54,6 +54,31 @@ class StringToolBox {
 	}
 
 	 /**
+	 * Protects delimiters of hex values that are in the contents of PDF or FDF files
+	 * 
+	 * @param string $content  the FDF or PDF content to protect
+	 * @return string the content protected
+	 */
+	public static function protectHexDelimiters($content) {
+		$content = str_replace("\\<", "$@#", $content);
+		$content = str_replace("\\>", "#@$", $content);
+		return $content;
+	}
+
+	 /**
+	 * Unprotects delimiters of hex values previously protected by protectHexDelimiters
+	 *
+	 * @param string $content  the FDF content with protected values
+	 * @return string the content unprotected
+	 */
+	public static function unProtectHexDelimiters($content) {
+		$content = str_replace("$@#", "\\<", $content);
+		$content = str_replace("#@$", "\\>", $content);
+		$content = stripcslashes($content);
+		return $content;
+	}
+
+	 /**
 	 * Removes dashes and table indexes in field names
 	 *
 	 * @param string $content  the field name to normalize

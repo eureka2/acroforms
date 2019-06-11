@@ -53,10 +53,10 @@ class PDFWriter {
 	public function setFormFieldValue($type, $name, $value) {
 		if (($field = $this->pdfDocument->getField($entry)) !== null) {
 			if ($type == "tooltip") {
-				$offsetShift = $this->setFieldTooltip($name, $value);
+				$offsetShift = $this->setFieldTooltipLine($name, $value);
 			} else {
-				if ($field->getCurrentValue() != '') {
-					$offsetShift = $this->setFieldValue($field->getCurrentValue(), $value, $field->getType(), false);
+				if ($field->getCurrentValueLine() != '') {
+					$offsetShift = $this->setFieldValue($field->getCurrentValueLine(), $value, $field->getType(), false);
 				} else {
 					$offsetShift = $this->setFieldValue($field->getNameLine(), $value, $field->getType(), true);
 				}
@@ -102,16 +102,16 @@ class PDFWriter {
 	}
 
 	/**
-	 * Sets the tooltip value of a field property.
+	 * Sets the tooltipLine value of a field property.
 	 * 
 	 * @param string $name name of the field 
 	 * @param string $value the new value to set
 	 * @return int the size variation of the PDF
 	 **/
-	private function setFieldTooltip($name, $value) {
+	private function setFieldTooltipLine($name, $value) {
 		$offsetShift = 0;
 		if (($field = $this->pdfDocument->getField($name)) !== null) {
-			$tooltipLine = $field->getTooltip();
+			$tooltipLine = $field->getTooltipLine();
 			if ($tooltipLine) {
 				$curLine = $this->pdfDocument->getEntry($tooltipLine);
 				$oldLen = strlen($curLine);
@@ -140,7 +140,7 @@ class PDFWriter {
 				$offsetShift = $shift;
 			}
 		} else {
-			throw new \Exception(sprintf("PDFWriter: setFieldTooltip failed as the field %s does not exist", $name));
+			throw new \Exception(sprintf("PDFWriter: setFieldTooltipLine failed as the field %s does not exist", $name));
 		}
 		return $offsetShift;
 	}
