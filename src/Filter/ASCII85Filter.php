@@ -29,7 +29,7 @@ namespace acroforms\Filter;
 /*
  *  Class for handling ASCII base-85 encoded data
  */
-class FilterASCII85 implements FilterInterface {
+class ASCII85Filter implements FilterInterface {
 
 	public function decode($in) {
 		$decoded = '';

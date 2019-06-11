@@ -51,22 +51,22 @@ class FilterFactory {
 	public static function getFilter($name) : FilterInterface{
 		switch($name) {
 			case "LZWDecode":
-				$filter = new FilterLZW();
+				$filter = new LZWFilter();
 				break;
 			case "ASCIIHexDecode": 
-				$filter = new FilterASCIIHex();
+				$filter = new ASCIIHexFilter();
 				break;
 			case "ASCII85Decode": 
-				$filter = new FilterASCII85();
+				$filter = new ASCII85Filter();
 				break;
 			case "FlateDecode":
-				$filter = new FilterFlate();
+				$filter = new FlateFilter();
 				break;
 			case "RunLengthDecode":
-				$filter = new FilterRunLength();
+				$filter = new RunLengthFilter();
 				break;
 			case "Standard": //Raw
-				$filter = new FilterStandard();
+				$filter = new StandardFilter();
 				break;
 			default:
 				throw new \Exception(sprintf("FilterFactory: getFilter cannot open stream of object because filter '%s' is not supported.", $name));

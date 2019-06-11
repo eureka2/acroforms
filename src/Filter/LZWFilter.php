@@ -29,7 +29,7 @@ namespace acroforms\Filter;
 /*
  *  Class for handling LZW encoded data
  */
-class FilterLZW implements FilterInterface {
+class LZWFilter implements FilterInterface {
 	
 	private $sTable = [];
 	private $data = null;
@@ -50,7 +50,7 @@ class FilterLZW implements FilterInterface {
 	 */
 	public function decode($data) {
 		if($data[0] == 0x00 && $data[1] == 0x01) {
-			throw new \Exception('FilterLZW: LZW flavour not supported.');
+			throw new \Exception('LZWFilter: LZW flavour not supported.');
 		}
 		$this->initsTable();
 		$this->data = $data;

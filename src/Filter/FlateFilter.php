@@ -29,7 +29,7 @@ namespace acroforms\Filter;
 /**
  * Class for handling GZIP compressed data
  */
-class FilterFlate implements FilterInterface {
+class FlateFilter implements FilterInterface {
 
 	private $data = null;
 	private $dataLength = 0;
@@ -45,7 +45,7 @@ class FilterFlate implements FilterInterface {
 		$this->dataLength = strlen($data);
 		$data = gzuncompress($data);
 		if(!$data) {
-			throw new \Exception("FilterFlateDecode: invalid stream data.");
+			throw new \Exception("FlateFilterDecode: invalid stream data.");
 		}
 		return $data;
 	}

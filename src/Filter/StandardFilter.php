@@ -29,7 +29,7 @@ namespace acroforms\Filter;
 /*
  *  Dummy filter for unfiltered streams!
  */
-class FilterStandard implements FilterInterface {
+class StandardFilter implements FilterInterface {
 
 	public function decode($data) {
 		return $data;
