@@ -1,5 +1,6 @@
 This library is a complete rewrite for php> = 7.1 of [script93](http://www.fpdf.org/en/script/script93.php) developed by Olivier, with additional features:
-* Supports linearized PDFs
+* Supports linearized PDF forms
+* Supports multi-pages PDF forms
 * Supports PDF 'radio', 'check box' and 'choice' fields in addition to 'text' fields
 * UTF-8 support
 

@@ -46,8 +46,9 @@ class PDFParser {
 
 	private $linesCount;
 	private $pointers = [];
-	private $objects = []; // name and parent of objects by object id
 	private $objectsLine = []; // line of objects by object id
+	private $linesObject = []; // Object in line
+	private $objects = []; // objects by object id
 
 	private $objectPosition = 0; //Position of an object, in the order it is declared in the pdf file
 
@@ -82,6 +83,7 @@ class PDFParser {
 			$p += strlen($entry) + 1;
 			if (preg_match("/^(\d+) (\d+) obj/", $entry, $match)) {
 				$this->objectsLine[$match[1]] = $i;
+				$this->linesObject[$i] = $match[1];
 			}
 		}
 		$this->parseObjects();
@@ -91,13 +93,50 @@ class PDFParser {
 	}
 
 	private function parseObjects() {
+		$root = null;
 		$from = 0;
 		while ( $from < $this->linesCount ) {
-			$from = $this->parseObject($from);
+			$field = $this->parseObject($from);
+			if ($field !== null) {
+				$objectId = $field->getId();
+				$this->objects[$objectId] = $field;
+				$name = $field->getName();
+				if ($name != '' && preg_match("/^topmostSubform/", $name)) {
+					if ($root !== null) {
+						throw new \Exception("Ambiguous document objects root");
+					}
+					$root = $field;
+				}
+			}
+		}
+		if ($root === null) {
+			throw new \Exception("Document objects root not found");
+		}
+		$this->updateDocumentFields($root);
+	}
+
+	private function updateDocumentFields(&$object, $name = "") {
+		$fieldname = $object->getName();
+		if ($name !== '') {
+			$fieldname = $name . "." . $fieldname;
+		}
+		if ($object->getType() != '' // it's a field
+			&& $object->getName() != '' // with a name
+			&& !$object->isPushButton()) { // and not a push button
+			if ($object->isButton()) {
+				$this->parseFieldStates($object);
+			}
+			$object->setFullName($fieldname);
+			$this->pdfDocument->setField($fieldname, $object);
+		}
+		$kids = $object->getKids();
+		foreach ($kids as $kid) {
+			$objectId = $this->linesObject[$kid];
+			$this->updateDocumentFields($this->objects[$objectId], $fieldname);
 		}
 	}
 
-	private function parseObject($from) {
+	private function parseObject(&$from) {
 		$match = [];
 		while ($from < $this->linesCount) { 
 			$entry = $this->pdfDocument->getEntry($from);
@@ -106,10 +145,10 @@ class PDFParser {
 			}
 			$from++;
 		}
+		$field = null;
 		if ($from < $this->linesCount) {
 			$defaultMaxLen = 0; //No limit
 			$defaultTooltipLine = 0; // TooltipLine is optional as it may not be defined
-			$parentId = 0;
 			$removed = false;
 			$objectId = intval($match[1]);
 			$this->pdfDocument->setOffset($objectId, $this->pointers[$from]);
@@ -122,23 +161,17 @@ class PDFParser {
 			$field->setTooltipLine($defaultTooltipLine);
 			$entry = $this->pdfDocument->getEntry(++$from);
 			while ( $from < $this->linesCount && ! preg_match("/endobj/", $entry)) {
-				$removed = $removed || ! $this->parseFieldProperty($entry, $from, $field, $parentId);
+				$removed = $removed || ! $this->parseFieldProperty($entry, $from, $field);
 				$entry = $this->pdfDocument->getEntry(++$from);
 			}
-			if ($field->getType() != '' // it's a field
-				&& $field->getName() != '' // with a name
-				&& !$removed // not removed 
-				&& !$field->isPushButton()) { // and not a push button
-				if ($field->isButton()) {
-					$this->parseFieldStates($field);
-				}
-				$this->pdfDocument->setField($field->getName(), $field);
+			if ($removed) {
+				$field = null;
 			}
 		}
-		return $from;
+		return $field;
 	}
 
-	private function parseFieldProperty($entry, $from, &$field, &$parentId) {
+	private function parseFieldProperty($entry, $from, &$field) {
 		$removed = false;
 		$match = [];
 		foreach (self::METAS as $meta) {
@@ -151,7 +184,7 @@ class PDFParser {
 		if (preg_match("/\/Trapped\s*\/(.+)$/",$entry, $match)) {
 			$this->pdfDocument->addMeta("Trapped", strtolower($match[1]));
 		} elseif (preg_match("/^\/T\s?\((.+)\)\s*$/", StringToolBox::protectParentheses($entry), $match)) {
-			$this->parseName($from, $match, $field, $parentId);
+			$this->parseName($from, $match, $field);
 		} elseif (preg_match("/^\/(V|DV|TU)\s*\((.+)\)\s*$/", StringToolBox::protectParentheses($entry), $match)) {
 			$this->parseValue($from, $match, $field);
 		} elseif (preg_match("/^\/(V|DV|TU)\s*\<(.+)\>\s*$/", StringToolBox::protectHexDelimiters($entry), $match)) {
@@ -162,8 +195,6 @@ class PDFParser {
 			$field->setMaxLen(intval($match[1]));
 		} elseif (preg_match("/^\/removed\s+true/", $entry)) {
 			$removed = true;
-		} elseif (preg_match("/^\/Parent\s+(\d+)/", $entry, $match)) {
-			$parentId = $match[1];
 		} elseif (preg_match("/^\/FT\s+\/(.+)$/", $entry, $match)) {
 			$field->setType($match[1]); // Tx, Btn, Ch or Sig
 		} elseif (preg_match("/^\/Ff\s+(\d+)/", $entry, $match)) {
@@ -185,27 +216,11 @@ class PDFParser {
 		return !$removed;
 	}
 
-	private function parseName($from, $match, &$field, &$parentId) {
+	private function parseName($from, $match, &$field) {
 		$name = StringToolBox::unProtectParentheses($match[1]);
 		$field->setName($name);
-		if ($field->getFullName() != '') {
-			$field->setFullName($field->getFullName() . "." . $name);
-		} else {
-			$field->setFullName($name);
-		}
 		$field->setNameLine($from);
 		$objectId = $field->getId();
-		$this->objects[$objectId] = [ 'name' => $name, 'parent' => $parentId ];
-		$fullName = [];
-		while (isset($this->objects[$parentId])) {
-			array_unshift($fullName, $this->objects[$parentId]['name']);
-			$parentId = $this->objects[$parentId]['parent'];
-		}
-		if (! empty($fullName)) {
-			$field->setFullName(implode(".", $fullName) . "." . $name);
-		} else {
-			$field->setFullName($name);
-		}
 	}
 
 	private function parseValue($from, $match, &$field) {
