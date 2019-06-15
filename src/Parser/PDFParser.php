@@ -220,7 +220,6 @@ class PDFParser {
 		$name = StringToolBox::unProtectParentheses($match[1]);
 		$field->setName($name);
 		$field->setNameLine($from);
-		$objectId = $field->getId();
 	}
 
 	private function parseValue($from, $match, &$field) {
