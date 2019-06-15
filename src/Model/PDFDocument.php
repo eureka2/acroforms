@@ -55,6 +55,7 @@ class PDFDocument extends BaseDocument {
 	 * Loads the content of a PDF file
 	 *
 	 * @param string $filename the filename of the file
+	 * @param string $pdftk the full path of the pdftk executable
 	 **/
 	public function load($filename, $pdftk = "") {
 		parent::load($filename);
