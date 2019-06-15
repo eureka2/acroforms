@@ -46,8 +46,7 @@ class URLToolBox {
 			'path' => ''
 		], parse_url($relativeUrl));
 		$url["path"] = self::resolvePath($url["path"] ?? '');
-		$absolute_url = self::buildUrl($url);
-		return $absolute_url;
+		return self::buildUrl($url);
 	}
 
 	/**
@@ -94,8 +93,7 @@ class URLToolBox {
 			return $localDir;
 		}
 		$root = realpath(self::getServerVariableValue("DOCUMENT_ROOT"));
-		$serverDir = str_replace($root, '', $localDir);
-		return $serverDir;
+		return str_replace($root, '', $localDir);
 	}
 
 	private static function getServerVariableValue($variable) {
