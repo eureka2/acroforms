@@ -34,7 +34,7 @@ use acroforms\Utils\URLToolBox;
 use acroforms\Writer\FDFWriter;
 use acroforms\Writer\PDFWriter;
 
-define('ACROFORM_VERSION', '1.0.4'); 
+define('ACROFORM_VERSION', '1.0.5'); 
 
 class AcroForm {
 
@@ -100,6 +100,8 @@ class AcroForm {
 	 * Loads a form data to be merged
 	 *
 	 * @param string|array $data a FDF file content or an array containing the values for the fields to change
+	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
 	 **/
 	public function load($data) {
 		if (is_array($data)) {
@@ -111,6 +113,7 @@ class AcroForm {
 		} else {
 			throw new \Exception('AcroForm: Invalid content type!');
 		}
+		return $this;
 	}
 
 	/**
@@ -118,6 +121,8 @@ class AcroForm {
 	 *
 	 * @param string $mode a choice between 'safe','check','halt
 	 * @param bool $value true/false flag
+	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
 	 **/
 	private function setMode($mode, $value) {
 		switch($mode) {
@@ -148,6 +153,7 @@ class AcroForm {
 			default:
 				throw new \Exception(sprintf("AcroForm: setMode error, Invalid mode '%s'", $mode));
 		}
+		return $this;
 	}
 
 	/**
@@ -175,49 +181,63 @@ class AcroForm {
 	 * Changes the support
 	 *
 	 * @param string $support Allow to use external support that has more advanced features (ie 'pdftk')
+	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
 	 **/
 	public function setSupport($support) {
 		$this->support = $support == 'pdftk' ? 'pdftk' : 'native';
+		return $this;
 	}
 
 	/**
 	 *
 	 * Fixes a corrupted PDF file
 	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
 	 **/
 	public function fix() {
 		$this->setMode('check', true); // Compare the cross-reference table offsets with objects offsets in the pdf file
 		$this->setMode('halt', false); // Do no stop on errors so fix is applied during merge process
+		return $this;
 	}
 
 	/**
 	 *
 	 * Decides to use  the  compress filter to restore compression.
 	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
+	 *
 	 **/
 	public function compress() {
 		$this->setMode('compress', true); 
 		$this->setSupport("pdftk");
+		return $this;
 	}
 
 	/**
 	 *
 	 * Decides to remove PDF page stream compression by applying the  uncompress  filter.
 	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
+	 *
 	 **/
 	public function uncompress() {
 		$this->setMode('uncompress',true); 
 		$this->setSupport("pdftk");
+		return $this;
 	}
 
 	/**
 	 *
 	 * Activates the flatten output to remove form from pdf file keeping field datas.
 	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
+	 *
 	 **/
 	public function flatten() {
 		$this->setMode('flatten',true); 
 		$this->setSupport("pdftk");
+		return $this;
 	}
 
 	/***
@@ -226,6 +246,8 @@ class AcroForm {
 	 *
 	 * @param string $type : 'owner' or  'user'
 	 * @param string $code : the password code
+	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
 	 **/
 	public function password($type, $code) {
 		switch($type) {
@@ -237,6 +259,7 @@ class AcroForm {
 				throw new \Exception(sprintf("AcroForm: Unsupported password type (%s), specify 'owner' or 'user' instead.", $type));
 		}
 		$this->setSupport("pdftk");
+		return $this;
 	}
 
 	/**
@@ -244,6 +267,8 @@ class AcroForm {
 	 * Defines the encrytion to the given bits
 	 *
 	 * @param int $bits 0, 40 or 128
+	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
 	 **/
 	public function encrypt($bits) {
 		switch($bits) {
@@ -256,6 +281,7 @@ class AcroForm {
 				throw new \Exception(sprintf("AcroForm: unsupported encrypt value of %d, only 0, 40 and 128 are supported", $bits));
 		}
 		$this->setSupport("pdftk");
+		return $this;
 	}
 
 	/**
@@ -294,6 +320,8 @@ class AcroForm {
 	 *  AllFeatures
 	 *     Allows  the  user	to  perform  all of the above, and top
 	 *     quality printing.
+	 *
+	 * @return array|\acroforms\AcroForm array of permission or this instance of AcroForm for chaining
 	 **/
 	public function allow($permissions = null) {
 		$permissionsHelp = array(
@@ -316,6 +344,7 @@ class AcroForm {
 			$perms = array_keys($permissionsHelp);
 			$this->security["allow"] = array_intersect($permissions, $perms);
 			$this->setSupport("pdftk");
+			return $this;
 		}
 	}
 
@@ -355,9 +384,23 @@ class AcroForm {
 
 	/**
 	 *
+	 * Returns the field whose name is given as parameter
+	 *
+	 * @param string $fieldName The field name
+	 *
+	 * @return \acroforms\AcroField|null The AcroField object of the field or null if this field doesn't exists
+	 **/
+	public function getField($fieldName) {
+		return $this->pdfDocument->getField($fieldName);
+	}
+
+	/**
+	 *
 	 * Merge FDF file with a PDF file
 	 *
 	 * @param bool $flatten Optional, false by default, if true will use pdftk to flatten the pdf form
+	 *
+	 * @return \acroforms\AcroForm this instance of AcroForm for chaining
 	 **/
 	public function merge($flatten = false) {
 		if ($flatten) {
@@ -381,6 +424,7 @@ class AcroForm {
 				throw new \Exception("AcroForm: PDF file is empty!");
 			}
 		}
+		return $this;
 	}
 
 	/**

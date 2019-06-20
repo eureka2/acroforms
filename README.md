@@ -41,8 +41,7 @@ $fields = [
 $pdf = new AcroForm('exemple.pdf', [
     'pdftk' => '/absolute/path/to/pdftk'
 ]);
-$pdf->load($fields);
-$pdf->merge();
+$pdf->load($fields)->merge();
 if (php_sapi_name() == 'cli') {
 	file_put_contents("filled.pdf", $pdf->output('S'));
 } else {
@@ -83,6 +82,7 @@ if (php_sapi_name() == 'cli') {
 |fix            |                                     |try to fix a corrupted PDF file   |
 |flatten        |                                     |flatten output to remove form from pdf file keeping field datas |
 |getButtonFields|                                     |Retrieve fields that are buttons  |
+|getField       |1. fieldName                         |Retrieve a form field by its name |
 |getTextFields  |                                     |Retrieve fields that are text type|
 |info           |                                     |Retrieve information from the pdf |
 |load           |1. data : array or string            |load a form data to be merged     |
