@@ -34,7 +34,7 @@ use acroforms\Utils\URLToolBox;
 use acroforms\Writer\FDFWriter;
 use acroforms\Writer\PDFWriter;
 
-define('ACROFORM_VERSION', '1.0.5'); 
+define('ACROFORM_VERSION', '1.0.6'); 
 
 class AcroForm {
 

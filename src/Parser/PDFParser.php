@@ -183,7 +183,7 @@ class PDFParser {
 		}
 		if (preg_match("/\/Trapped\s*\/(.+)$/",$entry, $match)) {
 			$this->pdfDocument->addMeta("Trapped", strtolower($match[1]));
-		} elseif (preg_match("/^\/T\s?\((.+)\)\s*$/", StringToolBox::protectParentheses($entry), $match)) {
+		} elseif (preg_match("/^\/T\s?\((.+)\)\s*$/", $entry, $match)) {
 			$this->parseName($from, $match, $field);
 		} elseif (preg_match("/^\/(V|DV|TU)\s*\((.+)\)\s*$/", StringToolBox::protectParentheses($entry), $match)) {
 			$this->parseValue($from, $match, $field);
@@ -217,7 +217,7 @@ class PDFParser {
 	}
 
 	private function parseName($from, $match, &$field) {
-		$name = StringToolBox::unProtectParentheses($match[1]);
+		$name = stripcslashes($match[1]);
 		$field->setName($name);
 		$field->setNameLine($from);
 	}

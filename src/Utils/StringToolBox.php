@@ -87,7 +87,7 @@ class StringToolBox {
 	public static function normalizeFieldName($name) {
 		$name = self::unaccent($name);
 		$name = preg_replace("/\[(\d+)\]/", "_$1_", $name);
-		$name = str_replace(["-", "."], ["_", "_"], $name);
+		$name = str_replace(["-", ".", "\\"], ["_", "_", ""], $name);
 		$name = preg_replace("/^topmostSubform_0__/", "", $name);
 		return $name;
 	}
